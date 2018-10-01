@@ -254,7 +254,7 @@ class AverageMeter(object):
 
 # 学习率衰减：lr = lr / lr_decay
 def adjust_learning_rate():
-    nonlocal lr
+    global lr
     lr = lr / lr_decay
     return optim.Adam(model.parameters(), lr, weight_decay=weight_decay, amsgrad=True)
 
