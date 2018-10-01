@@ -33,7 +33,7 @@ def main():
     random.seed(666)
 
     # 获取当前文件名，用于创建模型及结果文件的目录
-    file_name = os.path.basename(__file__).split('.')[0]
+    file_name = os.path.basename(sys.argv[0]).split('.')[0]
     # 创建保存模型和结果的文件夹
     if not os.path.exists('./model/%s' % file_name):
         os.makedirs('./model/%s' % file_name)
@@ -315,7 +315,8 @@ def main():
     workers = 12
 
     # epoch数量，分stage进行，跑完一个stage后降低学习率进入下一个stage
-    stage_epochs = [20, 10, 10]  
+    # stage_epochs = [20, 10, 10]
+    stage_epochs = [2, 1, 1]  
     # 初始学习率
     lr = 1e-4
     # 学习率衰减系数 (new_lr = lr / lr_decay)
@@ -367,7 +368,7 @@ def main():
     # 读取训练图片列表
     all_data = pd.read_csv('data/label.csv')
     # 分离训练集和测试集，stratify参数用于分层抽样
-    train_data_list, val_data_list = train_test_split(all_data, test_size=val_ratio, random_state=666, stratify=all_data['label'])
+    train_data_list, val_data_list = train_test_split(all_data, test_size = val_ratio, random_state = 666, stratify = all_data['label'])
     # 读取测试图片列表
     test_data_list = pd.read_csv('data/test.csv')
 
@@ -376,7 +377,7 @@ def main():
     
     # 训练集图片变换，输入网络的尺寸为384*384
     train_data = TrainDataset(train_data_list,
-                              transform=transforms.Compose([
+                              transform = transforms.Compose([
                                   transforms.Resize((400, 400)),
                                   transforms.ColorJitter(0.15, 0.15, 0.15, 0.075),
                                   transforms.RandomHorizontalFlip(),
@@ -390,7 +391,7 @@ def main():
 
     # 验证集图片变换
     val_data = ValDataset(val_data_list,
-                          transform=transforms.Compose([
+                          transform = transforms.Compose([
                               transforms.Resize((400, 400)),
                               transforms.CenterCrop(384),
                               transforms.ToTensor(),
@@ -399,7 +400,7 @@ def main():
 
     # 测试集图片变换
     test_data = TestDataset(test_data_list,
-                            transform=transforms.Compose([
+                            transform = transforms.Compose([
                                 transforms.Resize((400, 400)),
                                 transforms.CenterCrop(384),
                                 transforms.ToTensor(),
@@ -407,15 +408,15 @@ def main():
                             ]))
 
     # 生成图片迭代器
-    train_loader = DataLoader(train_data, batch_size=batch_size, shuffle=True, pin_memory=True, num_workers=workers)
-    val_loader = DataLoader(val_data, batch_size=batch_size*2, shuffle=False, pin_memory=False, num_workers=workers)
-    test_loader = DataLoader(test_data, batch_size=batch_size*2, shuffle=False, pin_memory=False, num_workers=workers)
+    train_loader = DataLoader(train_data, batch_size = batch_size, shuffle = True, pin_memory = True, num_workers = workers)
+    val_loader = DataLoader(val_data, batch_size = batch_size*2, shuffle = False, pin_memory = False, num_workers = workers)
+    test_loader = DataLoader(test_data, batch_size = batch_size*2, shuffle = False, pin_memory = False, num_workers = workers)
 
     # 使用交叉熵损失函数
     criterion = nn.CrossEntropyLoss().cuda()
 
     # 优化器，使用带amsgrad的Adam
-    optimizer = optim.Adam(model.parameters(), lr, weight_decay=weight_decay, amsgrad=True)
+    optimizer = optim.Adam(model.parameters(), lr, weight_decay = weight_decay, amsgrad = True)
 
     if evaluate:
         validate(val_loader, model, criterion)
@@ -457,10 +458,10 @@ def main():
 
     # 记录线下最佳分数
     with open('./result/%s.txt' % file_name, 'a') as acc_file:
-        acc_file.write('* best acc: %.8f  %s\n' % (best_precision, os.path.basename(__file__)))
+        acc_file.write('* best acc: %.8f  %s\n' % (best_precision, os.path.basename(sys.argv[0])))
     with open('./result/best_acc.txt', 'a') as acc_file:
         acc_file.write('%s  * best acc: %.8f  %s\n' % (
-        time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(time.time())), best_precision, os.path.basename(__file__)))
+        time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(time.time())), best_precision, os.path.basename(sys.argv[0])))
 
     # 读取最佳模型，预测测试集，并生成可直接提交的结果文件
     best_model = torch.load('./model/%s/model_best.pth.tar' % file_name)
